@@ -286,38 +286,32 @@ public class frm_Alice extends javax.swing.JFrame {
 
     private void jButton6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton6ActionPerformed
         try {
-            // Sinh tham số DH
-            AlgorithmParameterGenerator paramGen
-                    = AlgorithmParameterGenerator.getInstance("DH");
-            paramGen.init(512);
-            AlgorithmParameters params = paramGen.generateParameters();
-            DHParameterSpec dhParamSpec
-                    = params.getParameterSpec(DHParameterSpec.class);
-            System.out.println("Generating Alice KeyPair...");
-            KeyPairGenerator aliceKpairGen
-                    = KeyPairGenerator.getInstance("DH");
-            aliceKpairGen.initialize(dhParamSpec);
-            KeyPair aliceKpair = aliceKpairGen.generateKeyPair();
-            System.out.println("Initializing the KeyAgreement engine with Alice private key...");
-            aliceKeyAgree = KeyAgreement.getInstance("DH");
-            aliceKeyAgree.init(aliceKpair.getPrivate());
-
-            byte[] alicePubKeyEnc = aliceKpair.getPublic().getEncoded();
-            java.nio.file.Path dirPath = Paths.get("src/Week_04");
-            if (!java.nio.file.Files.exists(dirPath)) {
-                java.nio.file.Files.createDirectories(dirPath);
-            }
-            try (FileOutputStream fos
-                    = new FileOutputStream(dirPath.resolve("A.pub").toFile())) {
-                fos.write(alicePubKeyEnc);
-            }
-            txt_alice_key.setText(
-                    Base64.getEncoder().encodeToString(alicePubKeyEnc)
-            );
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
+        byte[] bobPubKeyEnc;
+        try (FileInputStream fis = new FileInputStream(Paths.get("src/Week_04/B.pub").toFile())) {
+            bobPubKeyEnc = new byte[fis.available()];
+            fis.read(bobPubKeyEnc);
         }
+        KeyFactory aliceKeyFac = KeyFactory.getInstance("DH");
+        X509EncodedKeySpec x509KeySpec = new X509EncodedKeySpec(bobPubKeyEnc);
+        PublicKey bobPubKey = aliceKeyFac.generatePublic(x509KeySpec);
+        aliceKeyAgree.doPhase(bobPubKey, true);
+        
+        byte[] sharedSecret = aliceKeyAgree.generateSecret();
+        txt_encrypt_shared_secret.setText(CryptoUtil.toHexString(sharedSecret));
+        MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
+        byte[] desKeyBytes = Arrays.copyOf(sha256.digest(sharedSecret), 8);
+        SecretKeySpec desKeySpec = new SecretKeySpec(desKeyBytes, "DES");
+        txt_encrypt_shared_secret.setText(Base64.getEncoder().encodeToString(desKeySpec.getEncoded()));
+        String fileName = "src/Week_04/A.txt";
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(fileName))) {
+            bw.write(Base64.getEncoder().encodeToString(desKeySpec.getEncoded()));
+        }
+        
+        System.out.println("Ghi file A.txt thanh cong!"); // Log để kiểm tra
+
+    } catch (Exception ex) {
+        ex.printStackTrace();
+    }
     }//GEN-LAST:event_jButton6ActionPerformed
 
     /**
