@@ -20,9 +20,15 @@
 		</dependency>
 		<dependency>
 		<groupId>org.bouncycastle</groupId>
-		<artifactId>bcprov-jdk15on</artifactId>
+		<artifactId>bcpkix-jdk15on</artifactId>
 		<version>1.70</version>
 		</dependency>
+	 <dependency>
+	  <groupId>org.opensmarthouse.core.bundles</groupId>
+	  <artifactId>org.opensmarthouse.core.io.jetty.certificate</artifactId>
+	  <version>0.10.1</version>
+	  <type>jar</type>
+	 </dependency>
 	</dependencies>
     <name>NguyenHoaiNam_THBMTT</name>
 </project>
